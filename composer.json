@@ -1,0 +1,37 @@
+{
+    "name": "sglms/inverse-logistics-service",
+    "description": "Inverse logistics domain service package for Laravel",
+    "type": "library",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "SGLMS\\InverseLogistics\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SGLMS\\InverseLogistics\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SGLMS\\InverseLogistics\\Providers\\InverseLogisticsServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.4",
+        "illuminate/support": "^11.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0",
+        "pestphp/pest": "^3.0",
+        "laravel/pint": "^1.29"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
