@@ -54,6 +54,10 @@ class ReturnController extends Controller
             }
             $return->requestProductQuantities = $this->service->getRequestProductQuantities($return->id);
             $return->returnProductQuantities = $this->service->getReturnProductQuantities($return->id);
+            $return->unregisteredProducts = array_diff_key(
+                $return->returnProductQuantities,
+                $return->requestProductQuantities
+            );
         });
 
         return view('inverse-logistics::welcome', compact('returns'));

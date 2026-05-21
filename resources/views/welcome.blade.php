@@ -56,6 +56,14 @@
                         </td>
                     </tr>
                 @endif
+                @if (count($return->notFoundProducts ?? []) > 0)
+                    <tr>
+                        <td></td>
+                        <td colspan="12">
+                            @dump($return->notFoundProducts)
+                        </td>
+                    </tr>
+                @endif
             @endforeach
         </tbody>
     </table>
