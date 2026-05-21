@@ -1,6 +1,6 @@
 <?php
 
-namespace SGLMS\InverseLogistics\Support\Facades;
+namespace Sglms\InverseLogistics\Support\Facades;
 
 use Illuminate\Support\Facades\Facade;
 

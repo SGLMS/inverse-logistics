@@ -15,4 +15,8 @@ return [
         'restock_location' => env('INVERSE_LOGISTICS_RESTOCK_LOCATION'),
     ],
 
+    'models' => [
+        'request' => 'App\\Models\\Request',
+    ],
+
 ];
