@@ -41,12 +41,12 @@ class InverseLogisticsServiceProvider extends ServiceProvider
 
     private function registerLivewireComponents(): void
     {
-        if (! class_exists('Livewire\\Livewire') || ! method_exists('Livewire\\Livewire', 'addNamespace')) {
+        if (! class_exists('Livewire\\Livewire') || ! method_exists('Livewire\\LivewireManager', 'addNamespace')) {
             return;
         }
 
         Livewire::addNamespace(
-            namespace: 'invlog',
+            namespace: 'inverse-logistics',
             viewPath: __DIR__.'/../../resources/views/livewire',
             classNamespace: 'Sglms\\InverseLogistics\\Http\\Livewire',
             classPath: __DIR__.'/../../src/Http/Livewire',

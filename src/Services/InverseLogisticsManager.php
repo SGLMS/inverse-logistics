@@ -2,6 +2,11 @@
 
 namespace Sglms\InverseLogistics\Services;
 
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Sglms\InverseLogistics\Enums\ReturnStatus;
+use Sglms\InverseLogistics\Models\ILReturn;
+
 class InverseLogisticsManager
 {
     private const REQUEST_MODEL = 'App\\Models\\Request';
@@ -12,7 +17,7 @@ class InverseLogisticsManager
 
     public function createReturn(array $data): array
     {
-        $return = \Sglms\InverseLogistics\Models\ILReturn::updateOrCreate(
+        $return = ILReturn::updateOrCreate(
             [
                 'reference' => $data['reference'] ?? null,
                 'client_id' => $data['client_id'] ?? null,
@@ -24,30 +29,44 @@ class InverseLogisticsManager
                 'driver_name' => $data['driver_name'] ?? null,
                 'truck_number' => $data['truck_number'] ?? null,
                 'payload' => $data['payload'] ?? null,
-                'status' => 'pending',
+                'status' => ReturnStatus::Pending,
             ]
         );
+
         return $return->toArray();
     }
 
     public function approveReturn(string $returnId): bool
     {
-        return true;
+        $return = ILReturn::findOrFail($returnId);
+
+        return $return->forceFill([
+            'status' => ReturnStatus::Approved,
+            'approved_at' => Carbon::now(),
+            'rejected_at' => null,
+        ])->save();
     }
 
     public function rejectReturn(string $returnId, ?string $reason = null): bool
     {
-        return true;
+        $return = ILReturn::findOrFail($returnId);
+
+        return $return->forceFill([
+            'status' => ReturnStatus::Rejected,
+            'approved_at' => null,
+            'rejected_at' => Carbon::now(),
+            'notes' => $reason ?: $return->notes,
+        ])->save();
     }
 
-    public function listReturns(array $filters = []): \Illuminate\Support\Collection
+    public function listReturns(array $filters = []): Collection
     {
-        return \Sglms\InverseLogistics\Models\ILReturn::latest()->get();
+        return ILReturn::latest()->get();
     }
 
-    public function getRequestProductQuantities(string $returnId): array
+    private function getRequestProductQuantities(int $returnId): array
     {
-        $return = \Sglms\InverseLogistics\Models\ILReturn::findOrFail($returnId);
+        $return = ILReturn::findOrFail($returnId);
         $requestModel = self::REQUEST_MODEL;
         $request = $requestModel::where('request_id', $return->reference)->first();
 
@@ -60,12 +79,27 @@ class InverseLogisticsManager
         return $quantities ?? [];
     }
 
-    public function getReturnProductQuantities(string $returnId): array
+    private function getReturnProductQuantities(int $returnId): array
     {
-        $return = \Sglms\InverseLogistics\Models\ILReturn::findOrFail($returnId);
-        foreach($return->payload ?? [] as $pid => $info) {
+        $return = ILReturn::findOrFail($returnId);
+        foreach ($return->payload ?? [] as $pid => $info) {
             $quantities[$pid] = is_array($info) ? $info[0] : 0;
         }
+
         return $quantities ?? [];
+    }
+
+    public function getReturnWithProductQuantities(int $returnId): ILReturn
+    {
+        $return = ILReturn::findOrFail($returnId);
+        $return->requestProductQuantities = $this->getRequestProductQuantities($returnId);
+        $return->returnProductQuantities = $this->getReturnProductQuantities($returnId);
+
+        $return->unregisteredProducts = array_diff_key(
+            $return->returnProductQuantities,
+            $return->requestProductQuantities
+        );
+
+        return $return;
     }
 }

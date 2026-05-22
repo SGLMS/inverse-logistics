@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('truck_number')->index()->note('License Plate of the truck assigned to the return');
             $table->string('driver_id')->index()->note('ID of the driver handling the return');
             $table->string('driver_name')->nullable()->note('Name of the driver handling the return');
-            $table->string('status')->index()->note('Current status of the return');
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending')->index()->note('Current status of the return');
             $table->json('payload')->nullable()->note('Original payload of the return request');
             $table->text('notes')->nullable()->note('Additional notes for the return');
             $table->timestamp('approved_at')->nullable()->note('Timestamp when the return was approved');

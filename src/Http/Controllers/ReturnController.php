@@ -5,7 +5,7 @@ namespace Sglms\InverseLogistics\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Sglms\InverseLogistics\Models\ILReturn;
+use Sglms\InverseLogistics\Enums\ReturnStatus;
 use Sglms\InverseLogistics\Services\InverseLogisticsManager;
 
 class ReturnController extends Controller
@@ -28,7 +28,7 @@ class ReturnController extends Controller
         $this->service->approveReturn($returnId);
 
         return response()->json([
-            'status' => 'approved',
+            'status' => ReturnStatus::Approved->value,
         ]);
     }
 
@@ -40,7 +40,7 @@ class ReturnController extends Controller
         );
 
         return response()->json([
-            'status' => 'rejected',
+            'status' => ReturnStatus::Rejected->value,
         ]);
     }
 
@@ -48,18 +48,16 @@ class ReturnController extends Controller
     {
         $returns = $this->service->listReturns();
 
-        $returns->each(function ($return) {
-            if($return->request) {
-                $return->products = $return->request->products;
+        $returns = $returns->transform(function ($return) {
+            $enrichedReturn = $this->service->getReturnWithProductQuantities($return->id);
+
+            if ($enrichedReturn->request) {
+                $enrichedReturn->products = $enrichedReturn->request->products;
             }
-            $return->requestProductQuantities = $this->service->getRequestProductQuantities($return->id);
-            $return->returnProductQuantities = $this->service->getReturnProductQuantities($return->id);
-            $return->unregisteredProducts = array_diff_key(
-                $return->returnProductQuantities,
-                $return->requestProductQuantities
-            );
+
+            return $enrichedReturn;
         });
 
-        return view('inverse-logistics::welcome', compact('returns'));
+        return view('inverse-logistics::index', compact('returns'));
     }
 }
