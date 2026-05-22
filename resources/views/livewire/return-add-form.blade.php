@@ -94,12 +94,12 @@ new class extends Component {
             @if ($client_id)
                 <flux:select label="{{ __('Reference') }} ({{ __('Document Number') }})" wire:model.live.blur="reference"
                     class="font-mono">
-                    <option value="">{{ __('Select Request') }}</option>
+                    <flux:select.option value="">{{ __('Select Request') }}</flux:select.option>
                     @foreach ($this->requests as $r)
-                        <option value="{{ $r->request_id }}" :disabled="$r->request_status_id != 2">
+                        <flux:select.option value="{{ $r->request_id }}" :disabled="$r->request_status_id != 2">
                             {{ $r->request_doc_number }}
                             {{ $r->datetime->format('d/m/y') }}
-                        </option>
+                        </flux:select.option>
                     @endforeach
                 </flux:select>
             @else
