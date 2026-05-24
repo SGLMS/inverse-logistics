@@ -17,6 +17,12 @@ return [
 
     'models' => [
         'request' => 'App\\Models\\Request',
+        'checkin' => 'App\\Models\\Checkin',
+        'checkout' => 'App\\Models\\Checkout',
+        'client' => 'App\\Models\\Client',
+    ],
+    'services' => [
+        'checkin' => 'App\\Services\\CheckinService',
     ],
 
 ];

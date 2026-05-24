@@ -1,10 +1,7 @@
 <?php
 
-use App\Models\Checkin;
-use App\Models\Checkout;
-use App\Models\Request;
-use App\Services\CheckinService;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Sglms\InverseLogistics\Enums\ReturnStatus;
@@ -17,9 +14,9 @@ class ReturnShow extends Component
 
     public ?ILReturn $return = null;
 
-    public ?Request $request = null;
+    public ?Model $request = null;
 
-    public ?Checkout $checkout = null;
+    public ?Model $checkout = null;
 
     public function mount() {}
 
@@ -46,14 +43,15 @@ class ReturnShow extends Component
 
             return;
         }
+        $checkinModel = config('inverse-logistics.models.checkin');
         $checkinNumber = $this->checkout->cf_doc_number.'00'.$returnId;
         $checkinReference = $this->checkout->number.'-RETURN-'.$returnId;
-        if (Checkin::where('dg_number', $checkinNumber)->where('dg_client_id', $this->return->client_id)->exists()) {
+        if ($checkinModel::where('dg_number', $checkinNumber)->where('dg_client_id', $this->return->client_id)->exists()) {
             $this->dispatch('notification', message: 'Check-in already exists for this return.', type: 'warning');
 
             return;
         }
-        $checkin = Checkin::updateOrCreate([
+        $checkin = $checkinModel::updateOrCreate([
             'dg_number' => $checkinNumber,
             'dg_reference' => $checkinReference,
         ], [
@@ -66,7 +64,7 @@ class ReturnShow extends Component
             'dg_observations' => 'Check-in created for return ID '.$returnId.' with products: '.json_encode($this->return->returnProductQuantities),
         ]);
         foreach ($this->return->returnProductQuantities as $pid => $payloadEntry) {
-            app(CheckinService::class)->addProductUnits(
+            app(config('inverse-logistics.services.checkin'))->addProductUnits(
                 checkin: $checkin,
                 productId: (int) $pid,
                 units: $payloadEntry['units'] ?? 0,
@@ -95,15 +93,16 @@ class ReturnShow extends Component
 
             return;
         }
+        $checkinModel = config('inverse-logistics.models.checkin');
         $checkinNumber = $this->return->checkout->cf_doc_number.'00'.$returnId;
-        $checkin = Checkin::where('dg_number', $checkinNumber)->where('dg_client_id', $this->return->client_id)->first();
+        $checkin = $checkinModel::where('dg_number', $checkinNumber)->where('dg_client_id', $this->return->client_id)->first();
         if (! $checkin) {
             $this->dispatch('notification', message: 'Associated check-in not found.', type: 'error');
 
             return;
         }
         try {
-            $message = app(CheckinService::class)->delete($checkin);
+            $message = app(config('inverse-logistics.services.checkin'))->delete($checkin);
             ILReturn::find($returnId)->update([
                 'notes' => trim(($this->return->notes ?? '')."\n".'Check-in with ID '.$checkin->id.' and number '.$checkin->dg_number.' deleted.'),
                 'status' => ReturnStatus::Pending->value,

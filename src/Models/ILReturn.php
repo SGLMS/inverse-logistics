@@ -6,14 +6,11 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Sglms\InverseLogistics\Enums\ReturnStatus;
+use Sglms\InverseLogistics\Models\Traits\ConfigureModels;
 
 class ILReturn extends Model
 {
-    private const REQUEST_MODEL = 'App\\Models\\Request';
-
-    private const CHECKOUT_MODEL = 'App\\Models\\Checkout';
-
-    private const CLIENT_MODEL = 'App\\Models\\Client';
+    use ConfigureModels;
 
     protected $table = 'inverse_logistics_returns';
 
@@ -41,17 +38,17 @@ class ILReturn extends Model
 
     public function request(): BelongsTo
     {
-        return $this->belongsTo(self::REQUEST_MODEL, 'reference', 'request_id');
+        return $this->belongsTo($this->modelClass('request', 'App\\Models\\Request'), 'reference', 'request_id');
     }
 
     public function checkout(): BelongsTo
     {
-        return $this->belongsTo(self::CHECKOUT_MODEL, 'reference', 'cf_request_id');
+        return $this->belongsTo($this->modelClass('checkout', 'App\\Models\\Checkout'), 'reference', 'cf_request_id');
     }
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(self::CLIENT_MODEL, 'client_id', 'client_id');
+        return $this->belongsTo($this->modelClass('client', 'App\\Models\\Client'), 'client_id', 'client_id');
     }
 
     protected function quantity(): Attribute
