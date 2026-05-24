@@ -151,7 +151,7 @@ new class extends Component {
                 @endforeach
             </flux:select>
         </fieldset>
-        <fieldset class="grid lg:grid-cols-2 gap-lg">
+        <fieldset class="gap-lg">
             @if ($client_id)
                 <flux:select label="{{ __('Reference') }} ({{ __('Document Number') }})" wire:model.live="reference"
                     class="font-mono">
@@ -166,15 +166,14 @@ new class extends Component {
             @else
                 <flux:input label="{{ __('Reference') }} ({{ __('Document Number') }})" wire:model="reference" />
             @endif
-            <flux:input label="{{ __('Batch') }}" wire:model="batch" />
-        </fieldset>
-        <fieldset class="grid lg:grid-cols-3 gap-lg">
-            <flux:input label="{{ __('Truck\'s License Plate') }}" wire:model="truck_number" />
-            <flux:input label="{{ __('Driver ID') }}" wire:model="driver_id" />
-            <flux:input label="{{ __('Driver Name') }}" wire:model="driver_name" />
         </fieldset>
         @if ($checkout)
             <fieldset class="grid lg:grid-cols-3 gap-lg">
+                <flux:input label="{{ __('Truck\'s License Plate') }}" wire:model="truck_number" />
+                <flux:input label="{{ __('Driver ID') }}" wire:model="driver_id" />
+                <flux:input label="{{ __('Driver Name') }}" wire:model="driver_name" />
+            </fieldset>
+            <fieldset class="grid lg:grid-cols-4 gap-lg">
                 <div class="lg:col-span-2">
                     @if ($reference && $checkout)
                         <flux:select label="{{ __('Product') }}" wire:model.live.blur="product_code">
@@ -190,14 +189,16 @@ new class extends Component {
                     @endif
                 </div>
                 <flux:input label="{{ __('Quantity') }}" type="number" wire:model="quantity" class="" />
+                <flux:input label="{{ __('Batch') }}" wire:model="batch" />
+            </fieldset>
+            <fieldset>
+                <flux:textarea label="{{ __('Reason') }}" wire:model="notes" />
             </fieldset>
         @endif
-        <fieldset>
-            <flux:textarea label="{{ __('Reason for Return') }}" wire:model="notes" />
-        </fieldset>
         <div class="flex justify-end">
             <flux:button.group>
-                <flux:button type="button" variant="primary" icon="shield-check" wire:click="verified" :disabled="!$checkout">
+                <flux:button type="button" variant="primary" icon="shield-check" wire:click="verified"
+                    :disabled="!$checkout">
                     {{ __('Confirmed') }} ({{ __('No Return') }})
                 </flux:button>
                 <flux:button type="submit" variant="danger" icon="hard-drive" :disabled="!$checkout">

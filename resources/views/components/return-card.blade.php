@@ -24,8 +24,16 @@
             {{ __('Requested') }} :
             {{ Number::format(collect($return->requestProductQuantities ?? [])->sum() ?? 0) }}
         </span>
-        <flux:progress value="{{ $return->quantity ?? 0 }}"
-            max="{{ collect($return->requestProductQuantities ?? [])->sum() ?? 0 }}" class="" />
+        |
+        <flux:field class="w-32">
+            {{-- <flux:label>{{ __('Delivery') }}</flux:label> --}}
+            <div class="flex items-center gap-4 -mt-2">
+                <flux:progress value="{{ abs($return->deliveredPercentage) ?? 0 }}" max="100" class=""
+                    color="green" />
+                <span class="text-sm tabular-nums ...">{{ $return->deliveredPercentage ?? 0 }}%</span>
+            </div>
+        </flux:field>
+
     </div>
     <div class="flex items-center gap-1">
         <flux:icon.identification class="inline size-5" /> :
@@ -45,4 +53,12 @@
             {{ $return->notes }}
         </span>
     </div>
+    @if (app()->environment('development') && $return->percentage)
+        <div class="flex items-center gap-1">
+            <flux:icon.bug-ant class="inline size-5" /> :
+            <span class="">
+                @dump($return->returnProductQuantities)
+            </span>
+        </div>
+    @endif
 </div>

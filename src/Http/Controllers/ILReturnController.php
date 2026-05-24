@@ -8,7 +8,7 @@ use Illuminate\Routing\Controller;
 use Sglms\InverseLogistics\Enums\ReturnStatus;
 use Sglms\InverseLogistics\Services\InverseLogisticsManager;
 
-class ReturnController extends Controller
+class ILReturnController extends Controller
 {
     public function __construct(
         protected InverseLogisticsManager $service
@@ -50,10 +50,6 @@ class ReturnController extends Controller
 
         $returns = $returns->transform(function ($return) {
             $enrichedReturn = $this->service->getReturnWithProductQuantities($return->id);
-
-            if ($enrichedReturn->request) {
-                $enrichedReturn->products = $enrichedReturn->request->products;
-            }
 
             return $enrichedReturn;
         });

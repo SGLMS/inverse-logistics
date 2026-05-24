@@ -4,7 +4,7 @@
     </x-dispatcher::alert>
 
     <livewire:inverse-logistics::return-add-modal />
-    <livewire:inverse-logistics::return-show />
+    <livewire:inverse-logistics::return-modal />
 
     <table class="table w-full">
         <thead>
@@ -37,7 +37,7 @@
                         <x-inverse-logistics::return-status :return="$return" />
                     </td>
                     <td>
-                        <x-inverse-logistics::return-reference-link :return="$return" :debug="! app()->environment('production')" />
+                        <x-inverse-logistics::return-reference-link :return="$return" :debug="!app()->environment('production')" />
                     </td>
                     <td>{{ $return->client->name ?? '' }}</td>
                     <td>{{ $return->route_date->format('d/m/Y') }}</td>
@@ -54,6 +54,7 @@
                             <span class="text-xl font-bold">
                                 {{ Number::format($return->quantity) }}
                             </span>
+                            ({{ Number::format($return->percentage) }}%)
                         </div>
                     </td>
                     <td>{{ $return->notes }}</td>

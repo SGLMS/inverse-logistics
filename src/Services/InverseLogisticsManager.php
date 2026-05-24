@@ -9,10 +9,6 @@ use Sglms\InverseLogistics\Models\ILReturn;
 
 class InverseLogisticsManager
 {
-    private const REQUEST_MODEL = 'App\\Models\\Request';
-
-    private const CHECKOUT_MODEL = 'App\\Models\\Checkout';
-
     public function __construct(
         protected array $config = []
     ) {}
@@ -100,11 +96,26 @@ class InverseLogisticsManager
         $return = ILReturn::findOrFail($returnId);
         $return->requestProductQuantities = $this->getRequestProductQuantities($returnId);
         $return->returnProductQuantities = $this->getReturnProductQuantities($returnId);
-
         $return->unregisteredProducts = array_diff_key(
             $return->returnProductQuantities,
             $return->requestProductQuantities
         );
+        $return->percentage =
+            collect($return->requestProductQuantities)->sum() > 0
+            ? round(($return->quantity / collect($return->requestProductQuantities)->sum()) * 100, 2)
+            : 0;
+        $return->deliveredPercentage = 100 - $return->percentage;
+        $return->deliveredProductsPercentages = collect($return->requestProductQuantities)->mapWithKeys(
+            function ($units, $productId) use ($return) {
+                $returnedUnits = $return->returnProductQuantities[$productId]['units'] ?? 0;
+                $percentage = $units > 0 ? round(($returnedUnits / $units) * 100, 2) : 0;
+
+                return [$productId => $percentage];
+            }
+        )->toArray();
+        if ($return->checkout) {
+            $return->products = $return->checkout->products;
+        }
 
         return $return;
     }

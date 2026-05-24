@@ -8,7 +8,7 @@ use Sglms\InverseLogistics\Enums\ReturnStatus;
 use Sglms\InverseLogistics\Models\ILReturn;
 use Sglms\InverseLogistics\Services\InverseLogisticsManager;
 
-class ReturnShow extends Component
+class ReturnModal extends Component
 {
     public ?int $returnId = null;
 
@@ -22,13 +22,15 @@ class ReturnShow extends Component
 
     public function render()
     {
-        return view('inverse-logistics::livewire.return-show');
+        return view('inverse-logistics::livewire.return-modal');
     }
 
     #[On('return-show')]
     public function show(int $returnId)
     {
-        Flux::modal('return-show-modal')->show();
+        $this->returnId = $returnId;
+        $this->return = app(InverseLogisticsManager::class)->getReturnWithProductQuantities($returnId);
+        Flux::modal('return-modal')->show();
     }
 
     #[On('return-create-checkin')]
@@ -80,7 +82,7 @@ class ReturnShow extends Component
         ]);
         $this->dispatch('notification', message: __('Check-in created for this return.'), type: 'success');
 
-        Flux::modal('return-show-modal')->show();
+        Flux::modal('return-modal')->show();
     }
 
     #[On('return-undo-checkin')]
@@ -107,7 +109,7 @@ class ReturnShow extends Component
                 'notes' => trim(($this->return->notes ?? '')."\n".'Check-in with ID '.$checkin->id.' and number '.$checkin->dg_number.' deleted.'),
                 'status' => ReturnStatus::Pending->value,
             ]);
-            Flux::modal('return-show-modal')->show();
+            Flux::modal('return-modal')->show();
         } catch (Exception $e) {
             $this->dispatch('notification', message: 'Error deleting check-in: '.$e->getMessage(), type: 'error');
 
