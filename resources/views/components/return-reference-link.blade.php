@@ -1,7 +1,7 @@
 @props(['return', 'debug' => false])
-@if ($return->request)
-    <flux:link href="{{ route('requests.show', $return->request->request_id) }}" class="cursor-pointer" target="_blank">
-        {{ $return->request->number }}
+@if ($return->checkout)
+    <flux:link href="{{ route('checkouts.show', $return->checkout->cf_id) }}" class="cursor-pointer text-purple-700 font-mono font-semibold" target="_blank">
+        {{ $return->checkout->number }}
     </flux:link>
     @if ($debug)
         <span class="text-xs font-mono">

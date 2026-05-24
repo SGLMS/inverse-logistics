@@ -6,7 +6,7 @@
     <livewire:inverse-logistics::return-add-modal />
     <livewire:inverse-logistics::return-show />
 
-    <table class="table">
+    <table class="table w-full">
         <thead>
             <tr>
                 <th>{{ __('ID') }}</th>

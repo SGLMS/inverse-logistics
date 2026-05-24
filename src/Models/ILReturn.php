@@ -10,6 +10,9 @@ use Sglms\InverseLogistics\Enums\ReturnStatus;
 class ILReturn extends Model
 {
     private const REQUEST_MODEL = 'App\\Models\\Request';
+
+    private const CHECKOUT_MODEL = 'App\\Models\\Checkout';
+
     private const CLIENT_MODEL = 'App\\Models\\Client';
 
     protected $table = 'inverse_logistics_returns';
@@ -41,6 +44,11 @@ class ILReturn extends Model
         return $this->belongsTo(self::REQUEST_MODEL, 'reference', 'request_id');
     }
 
+    public function checkout(): BelongsTo
+    {
+        return $this->belongsTo(self::CHECKOUT_MODEL, 'reference', 'cf_request_id');
+    }
+
     public function client(): BelongsTo
     {
         return $this->belongsTo(self::CLIENT_MODEL, 'client_id', 'client_id');
@@ -49,7 +57,9 @@ class ILReturn extends Model
     protected function quantity(): Attribute
     {
         return Attribute::make(
-            get: fn () => collect($this->payload ?? [])->sum(fn ($item) => (int) data_get($item, 0, 0))
+            get: fn () => collect($this->payload ?? [])->sum(
+                fn ($payloadEntry) => (int) data_get($payloadEntry, 'units', data_get($payloadEntry, 0, 0))
+            )
         );
     }
 }

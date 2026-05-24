@@ -5,6 +5,7 @@
             <th>{{ __('Requested') }}</th>
             <th>{{ __('Delivered') }}</th>
             <th>{{ __('Returned') }}</th>
+            <th>{{ __('Reason') }}</th>
         </tr>
     </thead>
     <tbody>
@@ -13,7 +14,10 @@
                 <td>{{ $return->products->find($pid)?->code ?? $pid }}</td>
                 <td>{{ $return->products->find($pid)?->name ?? $pid }}</td>
                 <td class="text-right">{{ $quantity }}</td>
-                <td class="text-right">{{ $return->returnProductQuantities[$pid] ?? '-' }}
+                <td class="text-right">{{ $return->returnProductQuantities[$pid]['units'] ?? '-' }}
+                </td>
+                <td class="text-right">
+                    {{ $return->returnProductQuantities[$pid]['reason'] ?? '-' }}
                 </td>
             </tr>
         @endforeach

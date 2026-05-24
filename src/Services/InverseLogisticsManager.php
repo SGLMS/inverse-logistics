@@ -11,6 +11,8 @@ class InverseLogisticsManager
 {
     private const REQUEST_MODEL = 'App\\Models\\Request';
 
+    private const CHECKOUT_MODEL = 'App\\Models\\Checkout';
+
     public function __construct(
         protected array $config = []
     ) {}
@@ -29,7 +31,7 @@ class InverseLogisticsManager
                 'driver_name' => $data['driver_name'] ?? null,
                 'truck_number' => $data['truck_number'] ?? null,
                 'payload' => $data['payload'] ?? null,
-                'status' => ReturnStatus::Pending,
+                'status' => $data['status'] ?? ReturnStatus::Pending,
             ]
         );
 
@@ -67,12 +69,11 @@ class InverseLogisticsManager
     private function getRequestProductQuantities(int $returnId): array
     {
         $return = ILReturn::findOrFail($returnId);
-        $requestModel = self::REQUEST_MODEL;
-        $request = $requestModel::where('request_id', $return->reference)->first();
+        $checkout = $return->checkout;
 
-        if ($request) {
-            foreach ($request->products as $product) {
-                $quantities[$product->product_id] = $request->getProductRequestedUnits($product->product_id);
+        if ($checkout) {
+            foreach ($checkout->products->unique('product_id') as $product) {
+                $quantities[$product->product_id] = $checkout->getProductDispatchedUnits($product->product_id);
             }
         }
 
@@ -82,8 +83,13 @@ class InverseLogisticsManager
     private function getReturnProductQuantities(int $returnId): array
     {
         $return = ILReturn::findOrFail($returnId);
-        foreach ($return->payload ?? [] as $pid => $info) {
-            $quantities[$pid] = is_array($info) ? $info[0] : 0;
+        foreach ($return->payload ?? [] as $productId => $payloadEntry) {
+            $quantities[$productId] = [
+                'units' => is_array($payloadEntry)
+                ? (int) ($payloadEntry['units'] ?? $payloadEntry[0] ?? 0)
+                : 0,
+                'reason' => is_array($payloadEntry) ? ($payloadEntry['reason'] ?? null) : null,
+            ];
         }
 
         return $quantities ?? [];
