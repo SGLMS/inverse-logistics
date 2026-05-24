@@ -1,5 +1,10 @@
 @props(['return'])
-<div class="space-y-1">
+<x-dispatcher::card color="red" :code="$return->id" class="">
+    <x-slot:title>
+        {{ $return->checkout->number ?? ($return->request->number ?? __('N/A')) }}
+        {{ $return->client->name ?? '' }}
+    </x-slot:title>
+    <div>
     <div class="flex items-center gap-1">
         <flux:icon.truck class="inline size-5" /> :
         <span class="">
@@ -61,4 +66,5 @@
             </span>
         </div>
     @endif
-</div>
+    </div>
+</x-dispatcher::card>

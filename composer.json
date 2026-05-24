@@ -20,6 +20,12 @@
             ]
         }
     },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "git@github.com:sglms/laravel-dispatcher.git"
+        }
+    ],
     "require": {
         "php": "^8.4",
         "illuminate/database": "^13.0",
@@ -29,7 +35,8 @@
         "illuminate/translation": "^13.0",
         "illuminate/view": "^13.0",
         "livewire/livewire": "^4.3",
-        "livewire/flux": "^2.14"
+        "livewire/flux": "^2.14",
+        "sglms/dispatcher": "^1.0|dev-master"
     },
     "require-dev": {
         "laravel/framework": "^13.0",

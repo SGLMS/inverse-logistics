@@ -2,9 +2,9 @@
 <flux:button.group x-data>
     <flux:button icon="eye" color="gray" size="xs"
         x-on:click="$dispatch('return-show', { returnId: {{ $return->id }} })" />
-    <flux:dropdown>
-        <flux:button icon="ellipsis-vertical" color="gray" size="xs" />
-        @if ($return->status->editable() && $return->quantity > 0)
+    @if ($return->status->editable() && $return->quantity > 0)
+        <flux:dropdown>
+            <flux:button icon="ellipsis-vertical" color="gray" size="xs" />
             <flux:menu>
                 @if ($return->status === \Sglms\InverseLogistics\Enums\ReturnStatus::Pending)
                     <flux:navmenu.item icon="chevron-double-right"
@@ -34,6 +34,6 @@
                     </flux:navmenu.item>
                 @endif
             </flux:menu>
-        @endif
-    </flux:dropdown>
+        </flux:dropdown>
+    @endif
 </flux:button.group>
