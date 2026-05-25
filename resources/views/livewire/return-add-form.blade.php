@@ -17,6 +17,7 @@ new class extends Component {
     public $quantity;
     public $batch;
     public $notes;
+    public $dispatched = 0;
 
     protected $rules = [
         'client_id' => 'required|exists:inv_clients,client_id',
@@ -70,6 +71,17 @@ new class extends Component {
         $this->driver_name = $this->checkout->cf_driver_name;
         $this->driver_id = $this->checkout->cf_driver_ssn;
         $this->truck_number = $this->checkout->cf_license_plate;
+    }
+
+    public function updatedProductCode($value)
+    {
+        if (!$this->checkout) {
+            return;
+        }
+        $product = $this->checkout->products->where('product_code', $value)->first();
+        if ($product) {
+            $this->dispatched = $this->checkout->getProductDispatchedUnits($product->product_id);
+        }
     }
 
     public function save()
@@ -176,7 +188,7 @@ new class extends Component {
             <fieldset class="grid lg:grid-cols-4 gap-lg">
                 <div class="lg:col-span-2">
                     @if ($reference && $checkout)
-                        <flux:select label="{{ __('Product') }}" wire:model.live.blur="product_code">
+                        <flux:select label="{{ __('Product') }}" wire:model.live="product_code">
                             @foreach ($checkout->products->unique('product_code') as $product)
                                 <flux:select.option value="{{ $product->product_code }}">
                                     {{ $product->product_code }} - {{ $product->product_name }}
@@ -188,8 +200,10 @@ new class extends Component {
                             placeholder="PRDCTCD-XXXX" />
                     @endif
                 </div>
-                <flux:input label="{{ __('Quantity') }}" type="number" wire:model="quantity" class="" />
-                <flux:input label="{{ __('Batch') }}" wire:model="batch" />
+                <flux:input label="{{ __('Dispatched') }}" type="number" wire:model.live="dispatched" class=""
+                    input:class="text-right" :disabled="true" />
+                <flux:input label="{{ __('Return') }}" type="number" wire:model="quantity" class=""
+                    input:class="text-right" placeholder="##" />
             </fieldset>
             <fieldset>
                 <flux:textarea label="{{ __('Reason') }}" wire:model="notes" />
