@@ -20,9 +20,13 @@ return [
         'checkin' => 'App\\Models\\Checkin',
         'checkout' => 'App\\Models\\Checkout',
         'client' => 'App\\Models\\Client',
+        'pallet' => 'App\\Models\\Pallet',
+        'sku' => 'App\\Models\\Sku',
     ],
     'services' => [
         'checkin' => 'App\\Services\\CheckinService',
+        'request' => 'App\\Services\\RequestService',
+        'route' => 'App\\Services\\RouteService',
     ],
 
 ];
