@@ -1,4 +1,5 @@
 <x-layouts.app title="{{ __('Inverse Logistics Service') }}">
+
     <livewire:inverse-logistics::return-add-modal />
     <livewire:inverse-logistics::return-modal />
 
