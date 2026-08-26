@@ -2,8 +2,8 @@
 
 namespace Sglms\InverseLogistics\Services;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Sglms\InverseLogistics\Enums\ReturnStatus;
 use Sglms\InverseLogistics\Models\ILReturn;
 
@@ -57,9 +57,9 @@ class InverseLogisticsManager
         ])->save();
     }
 
-    public function listReturns(array $filters = []): Collection
+    public function listReturns(array $filters = []): LengthAwarePaginator
     {
-        return ILReturn::latest()->get();
+        return ILReturn::latest()->paginate(10);
     }
 
     private function getRequestProductQuantities(int $returnId): array
@@ -118,5 +118,21 @@ class InverseLogisticsManager
         }
 
         return $return;
+    }
+
+    public function verifyStatus(int $returnId): void
+    {
+        $return = ILReturn::findOrFail($returnId);
+
+        if ($return->checkin) {
+            $return->status = ReturnStatus::Checkin;
+            if ($return->checkin->dg_statusid == 1) {
+                // dump('Check-in is approved, setting return status to Approved');
+                $return->forceFill([
+                    'status' => ReturnStatus::Approved,
+                ]);
+            }
+            $return->save();
+        }
     }
 }

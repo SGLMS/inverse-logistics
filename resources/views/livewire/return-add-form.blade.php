@@ -15,11 +15,9 @@ new class extends Component {
     public $truck_number;
     public $driver_id;
     public $driver_name;
-    public $product_code;
-    public $quantity;
     public $batch;
     public $notes;
-    public $dispatched = 0;
+    public array $returns = [];
 
     protected $rules = [
         'client_id' => 'required|exists:inv_clients,client_id',
@@ -27,8 +25,7 @@ new class extends Component {
         'truck_number' => 'required|string|max:255',
         'driver_id' => 'required|string|max:255',
         'driver_name' => 'required|string|max:255',
-        'product_code' => 'required|string|max:255',
-        'quantity' => 'required|integer|min:1',
+        'returns.*' => 'nullable|integer|min:0',
         'notes' => 'nullable|string',
         'batch' => 'nullable|string|max:255',
     ];
@@ -59,31 +56,27 @@ new class extends Component {
             ->get();
     }
 
+    #[Computed]
+    public function existingReferences()
+    {
+        return ILReturn::where('client_id', $this->client_id)->pluck('reference');
+    }
+
     public function updatedReference()
     {
         $this->checkout = \App\Models\Checkout::where('cf_request_id', $this->reference)->where('cf_client_id', $this->client_id)->first();
+        $this->returns = [];
 
         if (!$this->checkout) {
-            $this->product_code = null;
-
             return;
         }
 
-        $this->product_code = $this->checkout->products->first()?->product_code;
+        foreach ($this->checkout->products->unique('product_code') as $product) {
+            $this->returns[$product->product_code] = null;
+        }
         $this->driver_name = $this->checkout->cf_driver_name;
         $this->driver_id = $this->checkout->cf_driver_ssn;
         $this->truck_number = $this->checkout->cf_license_plate;
-    }
-
-    public function updatedProductCode($value)
-    {
-        if (!$this->checkout) {
-            return;
-        }
-        $product = $this->checkout->products->where('product_code', $value)->first();
-        if ($product) {
-            $this->dispatched = $this->checkout->getProductDispatchedUnits($product->product_id);
-        }
     }
 
     public function save()
@@ -93,19 +86,22 @@ new class extends Component {
         $this->checkout = \App\Models\Checkout::where('cf_request_id', $data['reference'])->where('cf_client_id', $clientId)->first();
         if ($this->checkout) {
             $date = $this->checkout->datetime->toDateString();
-            $product = \App\Models\Product::where('product_code', $data['product_code'])->first();
-            if (!$product) {
-                $this->dispatch('notification', message: __('Product code :code not found.', ['code' => $data['product_code']]), type: 'error');
-                return;
-            }
             $existingReturn = ILReturn::query()->where('reference', $this->checkout->cf_request_id)->where('client_id', $clientId)->first();
+            $payload = (array) ($existingReturn?->payload ?? []);
 
-            $existingPayload = (array) ($existingReturn?->payload ?? []);
-            $productId = (string) $product->product_id;
-            $existingProductPayload = (array) ($existingPayload[$productId] ?? []);
-
-            $payload = $existingPayload;
-            $payload[$productId] = [...$existingProductPayload, 'units' => (int) $data['quantity'], 'batch' => $data['batch'] ?? null, 'reason' => $data['notes'] ?? null];
+            foreach ((array) ($data['returns'] ?? []) as $productCode => $qty) {
+                if (!$qty) {
+                    continue;
+                }
+                $product = \App\Models\Product::where('product_code', $productCode)->first();
+                if (!$product) {
+                    $this->dispatch('notification', message: __('Product code :code not found.', ['code' => $productCode]), type: 'error');
+                    continue;
+                }
+                $productId = (string) $product->product_id;
+                $existingProductPayload = (array) ($payload[$productId] ?? []);
+                $payload[$productId] = [...$existingProductPayload, 'units' => (int) $qty, 'batch' => $data['batch'] ?? null, 'reason' => $data['notes'] ?? null];
+            }
 
             app(InverseLogisticsManager::class)->createReturn([
                 'reference' => $this->checkout->cf_request_id,
@@ -171,9 +167,11 @@ new class extends Component {
                     class="font-mono">
                     <flux:select.option value="">{{ __('-- Select --') }}</flux:select.option>
                     @foreach ($this->checkouts as $c)
-                        <flux:select.option value="{{ $c->cf_request_id }}">
-                            {{ $c->cf_doc_number }}
-                            {{ $c->datetime->format('d/m/y') }}
+                        <flux:select.option value="{{ $c->cf_request_id }}"
+                            :disabled="$this->existingReferences()->contains($c->cf_request_id)">
+                            {{ $c->documentTypeLabel }}
+                            #{{ $c->cf_doc_number }}
+                            [{{ $c->datetime->format('d/m/Y') }}]
                         </flux:select.option>
                     @endforeach
                 </flux:select>
@@ -187,26 +185,21 @@ new class extends Component {
                 <flux:input label="{{ __('Driver ID') }}" wire:model="driver_id" />
                 <flux:input label="{{ __('Driver Name') }}" wire:model="driver_name" />
             </fieldset>
-            <fieldset class="grid lg:grid-cols-4 gap-lg">
-                <div class="lg:col-span-2">
-                    @if ($reference && $checkout)
-                        <flux:select label="{{ __('Product') }}" wire:model.live="product_code">
-                            @foreach ($checkout->products->unique('product_code') as $product)
-                                <flux:select.option value="{{ $product->product_code }}">
-                                    {{ $product->product_code }} - {{ $product->product_name }}
-                                </flux:select.option>
-                            @endforeach
-                        </flux:select>
-                    @else
-                        <flux:input label="{{ __('Product Code') }}" wire:model="product_code"
-                            placeholder="PRDCTCD-XXXX" />
-                    @endif
-                </div>
-                <flux:input label="{{ __('Dispatched') }}" type="number" wire:model.live="dispatched" class=""
-                    input:class="text-right" :disabled="true" />
-                <flux:input label="{{ __('Return') }}" type="number" wire:model="quantity" class=""
-                    input:class="text-right" placeholder="##" />
-            </fieldset>
+            @foreach ($checkout->products->unique('product_code') as $product)
+                <fieldset class="grid lg:grid-cols-4 gap-lg">
+                    <div class="lg:col-span-2">
+                        <flux:input :label="$loop->first ? __('Product') : null"
+                            value="{{ $product->product_code }} - {{ $product->product_name }}"
+                            :disabled="true" />
+                    </div>
+                    <flux:input :label="$loop->first ? __('Dispatched') : null" type="number"
+                        value="{{ $checkout->getProductDispatchedUnits($product->product_id) }}" class=""
+                        input:class="text-right" :disabled="true" />
+                    <flux:input :label="$loop->first ? __('Return') : null" type="number"
+                        wire:model="returns.{{ $product->product_code }}" class="" input:class="text-right"
+                        placeholder="##" max="{{ $checkout->getProductDispatchedUnits($product->product_id) }}" />
+                </fieldset>
+            @endforeach
             <fieldset>
                 <flux:textarea label="{{ __('Reason') }}" wire:model="notes" />
             </fieldset>

@@ -8,5 +8,6 @@ Route::group([
     'as' => 'inverse-logistics.',
     'middleware' => ['web', 'auth'],
 ], function () {
+    Route::get('/show/{id}', [ILReturnController::class, 'show'])->name('show');
     Route::get('/', [ILReturnController::class, 'index'])->name('index');
 });

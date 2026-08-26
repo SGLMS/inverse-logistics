@@ -46,7 +46,8 @@ class ReturnModal extends Component
             return;
         }
         $checkinModel = config('inverse-logistics.models.checkin');
-        $checkinNumber = $this->checkout->cf_doc_number.'00'.$returnId;
+        $checkinNumber = date('ymd')
+            .str_pad($this->checkout->cf_doc_number, 8, '0', STR_PAD_LEFT);
         $checkinReference = $this->checkout->number.'-RETURN-'.$returnId;
         if ($checkinModel::where('dg_number', $checkinNumber)->where('dg_client_id', $this->return->client_id)->exists()) {
             $this->dispatch('notification', message: 'Check-in already exists for this return.', type: 'warning');
@@ -64,6 +65,7 @@ class ReturnModal extends Component
             'dg_driver_name' => $this->return->driver_name,
             'dg_license_plate' => $this->return->truck_number,
             'dg_observations' => 'Check-in created for return ID '.$returnId.' with products: '.json_encode($this->return->returnProductQuantities),
+            'dg_type' => 'IL',
         ]);
         foreach ($this->return->returnProductQuantities as $pid => $payloadEntry) {
             app(config('inverse-logistics.services.checkin'))->addProductUnits(
@@ -95,15 +97,23 @@ class ReturnModal extends Component
 
             return;
         }
-        $checkinModel = config('inverse-logistics.models.checkin');
+
         $checkinNumber = $this->return->checkout->cf_doc_number.'00'.$returnId;
-        $checkin = $checkinModel::where('dg_number', $checkinNumber)->where('dg_client_id', $this->return->client_id)->first();
+        $checkinSuffix = str_pad((string) $this->return->checkout->cf_doc_number, 8, '0', STR_PAD_LEFT);
+        $checkinModel = config('inverse-logistics.models.checkin');
+        $date = $this->return->route_date?->format('ymd');
+        $checkin = $checkinModel::where('dg_number', 'regexp', '\\d{6}'.$checkinSuffix)
+            ->where('dg_client_id', $this->return->client_id)->first();
         if (! $checkin) {
             $this->dispatch('notification', message: 'Associated check-in not found.', type: 'error');
 
             return;
         }
         try {
+            foreach($checkin->skus as $s) {
+                $s->delete();
+                $s->pallet?->delete();
+            }
             $message = app(config('inverse-logistics.services.checkin'))->delete($checkin);
             ILReturn::find($returnId)->update([
                 'notes' => trim(($this->return->notes ?? '')."\n".'Check-in with ID '.$checkin->id.' and number '.$checkin->dg_number.' deleted.'),
@@ -129,5 +139,6 @@ class ReturnModal extends Component
         }
         $this->return->delete();
         $this->dispatch('notification', message: __('Return deleted.'), type: 'success');
+        $this->redirect(route('inverse-logistics.index'));
     }
 }

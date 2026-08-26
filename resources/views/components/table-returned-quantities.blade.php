@@ -3,7 +3,7 @@
         <tr class="font-bold border-b-2 *:p-2">
             <th>{{ __('Product') }}</th>
             <th>{{ __('Requested') }}</th>
-            <th>{{ __('Delivered') }}</th>
+            <th>{{ __('Dispatched') }}</th>
             <th>{{ __('Returned') }}</th>
             <th>{{ __('Percentage') }}</th>
             <th>{{ __('Reason') }}</th>

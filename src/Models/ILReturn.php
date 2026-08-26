@@ -5,6 +5,7 @@ namespace Sglms\InverseLogistics\Models;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Sglms\InverseLogistics\Enums\ReturnStatus;
 use Sglms\InverseLogistics\Models\Traits\ConfigureModels;
 
@@ -58,5 +59,24 @@ class ILReturn extends Model
                 fn ($payloadEntry) => (int) data_get($payloadEntry, 'units', data_get($payloadEntry, 0, 0))
             )
         );
+    }
+
+    protected function checkinNumber(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $checkoutNumber = $this->checkout?->cf_doc_number ?? '0';
+
+                return str_pad((string) $checkoutNumber, 8, '0', STR_PAD_LEFT);
+            }
+        );
+    }
+
+    public function checkin(): HasOne
+    {
+        $checkinModel = config('inverse-logistics.models.checkin');
+
+        return $this->hasOne($checkinModel, 'dg_client_id', 'client_id')
+            ->where('dg_number', 'like', '%'.$this->checkinNumber);
     }
 }

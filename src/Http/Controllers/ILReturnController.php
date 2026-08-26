@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Sglms\InverseLogistics\Enums\ReturnStatus;
+use Sglms\InverseLogistics\Models\ILReturn;
 use Sglms\InverseLogistics\Services\InverseLogisticsManager;
 
 class ILReturnController extends Controller
@@ -48,12 +49,25 @@ class ILReturnController extends Controller
     {
         $returns = $this->service->listReturns();
 
-        $returns = $returns->transform(function ($return) {
-            $enrichedReturn = $this->service->getReturnWithProductQuantities($return->id);
-
-            return $enrichedReturn;
+        $returns->through(function ($return) {
+            return $this->service->getReturnWithProductQuantities($return->id);
         });
 
-        return view('inverse-logistics::index', compact('returns'));
+        return view('inverse-logistics::index', [
+            'returns' => $returns,
+        ]);
+    }
+
+    public function show(int $id)
+    {
+        $return = ILReturn::with(['request', 'checkout', 'client'])->find($id);
+
+        $return = $this->service->getReturnWithProductQuantities($return->id);
+
+        app(InverseLogisticsManager::class)->verifyStatus($return->id);
+
+        return view('inverse-logistics::show', [
+            'return' => $return,
+        ]);
     }
 }

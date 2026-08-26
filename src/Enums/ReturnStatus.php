@@ -19,12 +19,12 @@ enum ReturnStatus: string
     public static function labels(): array
     {
         return [
-            self::Pending->value => __('Pending'),
-            self::Checkin->value => __('Check-in'),
-            self::Approved->value => __('Approved'),
+            self::Pending->value => __('Partial Delivery'),
+            self::Checkin->value => __('Check-in Created'),
+            self::Approved->value => __('Check-in Closed'),
             self::Confirmed->value => __('Confirmed'),
             self::Rejected->value => __('Rejected'),
-            self::Verified->value => __('Verified'),
+            self::Verified->value => __('Verified Delivery'),
         ];
     }
 
