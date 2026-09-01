@@ -110,10 +110,7 @@ class ReturnModal extends Component
             return;
         }
         try {
-            foreach($checkin->skus as $s) {
-                $s->delete();
-                $s->pallet?->delete();
-            }
+            // Use checkin service to cleanup and delete skus, pallets, boxes.
             $message = app(config('inverse-logistics.services.checkin'))->delete($checkin);
             ILReturn::find($returnId)->update([
                 'notes' => trim(($this->return->notes ?? '')."\n".'Check-in with ID '.$checkin->id.' and number '.$checkin->dg_number.' deleted.'),
